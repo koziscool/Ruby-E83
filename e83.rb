@@ -15,12 +15,6 @@ class PointInfo
     @min_path = []
   end
 
-  def update( new_path_weight, path )
-    @min_path_weight = new_path_weight
-    @min_path = path
-    @improved_path = true
-  end
-
   def to_s
     "row: #{@row}  col:#{@col} weight: #{@weight}  min path weight: #{@min_path_weight}"
   end
@@ -146,11 +140,7 @@ class PathFinder
     while @graph.has_improved_path
       main_loop
     end
-    # puts @graph.terminal.info.min_path
-    @graph.nodes.each do |key, node|
-      puts node.info.to_s
-      puts node.info.min_path_string
-    end
+    puts @graph.terminal.info.min_path_string
     @graph.terminal.info.min_path_weight
   end 
 
@@ -158,52 +148,28 @@ class PathFinder
     updates = []
 
     ipn = @graph.improved_path_nodes
-    # puts ipn
     ipn.each do | key, node |
       node.neighbors.each do | neighbor_key |
-        # print neighbor_key
         neighbor = @graph.nodes[ neighbor_key ]
         new_path_weight = node.info.min_path_weight + neighbor.info.weight
-        if node.info.row == 2 && node.info.col == 4 && neighbor_key == [2, 3]
-          puts new_path_weight
-          puts neighbor.info.min_path_weight
-        end
+
         if new_path_weight < neighbor.info.min_path_weight
-          # binding.pry
-          new_path = node.info.min_path + [ neighbor.info.weight ]
-          update = [ neighbor, new_path_weight, new_path ]
-          if node.info.row == 2 && node.info.col == 4 && neighbor_key == [2, 3]
-            puts new_path_weight
-            puts neighbor.info.min_path_weight
-            puts update
-          end
-          updates << update
-          # binding.pry
+          neighbor.info.min_path_weight = new_path_weight
+          neighbor.info.min_path = node.info.min_path + [ neighbor.info.weight ]
+ 
+          updates << neighbor_key
         end
       end
     end
 
     @graph.clear_path_improvements
-
-    updates.each do |update|
-      # puts update[0]
-      update[0].info.update( update[1], update[2] )
-      # binding.pry
-      # puts update[0]
-    end
+    updates.each { |key| @graph.nodes[ key ].info.improved_path = true }
   end
 
 end
 
-p = PointInfo.new(3, 4)
-puts p
-
-g = Graph.new( 5, 5 )
-g.build_test_graph
-# print g.nodes[ [2, 4] ].neighbors
-# print g.nodes[ [79, 1] ].neighbors
-# puts
-# puts g.terminal
+g = Graph.new( 80, 80 )
+g.build_euler_graph
 
 pf = PathFinder.new( g )
 puts pf.find_min_path
